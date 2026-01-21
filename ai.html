@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI.EDUINO ROBOTS</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+
+<style>
+body {
+  margin: 0;
+  background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
+  font-family: Segoe UI, sans-serif;
+  color: rgb(0, 0, 0);
+  overflow: hidden;
+
+  /* single white dot pattern */
+  background-image: radial-gradient(rgb(0, 0, 0) 2px, transparent 2px);
+  background-size: 50px 50px; /* distance between dots */
+}
+
+.main{
+  display:flex;
+  height:calc(100vh - 50px);
+  justify-content:center; /* center camera when sidebar hidden */
+}
+
+.left{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  }
+
+video,canvas{
+  width:400px;
+  height:400px;
+  object-fit:cover;
+  border-radius:16px;
+}
+canvas{position:absolute}
+
+.overlay{
+  position:absolute;
+  width:500px;
+  height:500px;
+  background:#34495e;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  border-radius:16px;
+  z-index:10;
+}
+
+/* SIDEBAR (hidden by default) */
+.sidebar{
+  width:360px;
+  background:#000000cc;
+  padding:15px;
+  overflow-y:auto;
+  transition: transform 0.4s ease;
+  position:relative;
+  z-index:15;
+  display:none; /* completely hidden */
+}
+
+/* UI */
+.card{
+  background:#ffffff12;
+  padding:12px;
+  border-radius:12px;
+  margin-bottom:12px;
+}
+.card h3{color:#96958c;margin:0 0 8px}
+input{
+  width:100%;
+  padding:7px;
+  margin-bottom:6px;
+  border-radius:6px;
+  border:none;
+}
+button{
+  width:100%;
+  padding:10px;
+  background:#00eaff;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
+  cursor:pointer;
+}
+.status{color:#0f0}
+#gestureLabel{color:#ff0;margin-top:6px}
+
+/* Small Menu Button (top-right corner) */
+#sidebarToggleBtn{
+  position:absolute;
+  top:15px;
+  right:15px;
+  width:40px;
+  height:40px;
+  background:#703535;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+  z-index:30;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+}
+</style>
+</head>
+
+<body>
+
+
+
+<div class="main">
+
+<div class="left">
+  <video id="video" autoplay muted playsinline></video>
+  <canvas id="canvas"></canvas>
+  <div class="overlay" id="loading">Loading model please wait…</div>
+  <div class="overlay" id="noperson" style="display:none">No person detected</div>
+</div>
+
+<!-- Sidebar (hidden by default) -->
+<div class="sidebar" id="sidebar">
+
+<div class="card">
+  <button onclick="connectArduino()">🔌 Connect Arduino</button>
+  <div id="usbStatus" class="status">Not connected</div>
+</div>
+
+<div class="card">
+<h3>🖐 Hands</h3>
+<input id="rhUp" placeholder="Right Hand Up value">
+<input id="rhDown" placeholder="Right Hand Down value">
+<input id="lhUp" placeholder="Left Hand Up value">
+<input id="lhDown" placeholder="Left Hand Down value">
+<input id="bothUp" placeholder="Both Hands Up value">
+<input id="bothDown" placeholder="Both Hands Down value">
+</div>
+
+<div class="card">
+<h3>✋ Fingers (Right Hand)</h3>
+<input id="thumbUp" placeholder="Thumb Up value">
+<input id="thumbDown" placeholder="Thumb Down value">
+<input id="indexUp" placeholder="Index Up value">
+<input id="indexDown" placeholder="Index Down value">
+<input id="middleUp" placeholder="Middle Up value">
+<input id="middleDown" placeholder="Middle Down value">
+<input id="ringUp" placeholder="Ring Up value">
+<input id="ringDown" placeholder="Ring Down value">
+<input id="pinkyUp" placeholder="Pinky Up value">
+<input id="pinkyDown" placeholder="Pinky Down value">
+</div>
+
+<div class="card">
+<h3>✋ Fingers (Left Hand)</h3>
+<input id="lThumbUp" placeholder="Left Thumb Up value">
+<input id="lThumbDown" placeholder="Left Thumb Down value">
+<input id="lIndexUp" placeholder="Left Index Up value">
+<input id="lIndexDown" placeholder="Left Index Down value">
+<input id="lMiddleUp" placeholder="Left Middle Up value">
+<input id="lMiddleDown" placeholder="Left Middle Down value">
+<input id="lRingUp" placeholder="Left Ring Up value">
+<input id="lRingDown" placeholder="Left Ring Down value">
+<input id="lPinkyUp" placeholder="Left Pinky Up value">
+<input id="lPinkyDown" placeholder="Left Pinky Down value">
+</div>
+
+<div class="card">
+<h3>😀 Face</h3>
+<input id="mouthOpen" placeholder="Mouth Open value">
+<input id="mouthClose" placeholder="Mouth Close value">
+<input id="eyesOpen" placeholder="Eyes Open value">
+<input id="eyesClose" placeholder="Eyes Close value">
+</div>
+
+<div class="card">
+<button id="voiceBtn">Enable Voice</button>
+<b>Live Gesture:</b>
+<div id="gestureLabel">---</div>
+</div>
+
+</div>
+
+<!-- Small menu button to show/hide sidebar -->
+<button id="sidebarToggleBtn">☰</button>
+<!-- Button to open index.html -->
+<!-- <button id="openIndexBtn">🏠</button> -->
+
+<style>
+#openIndexBtn{
+  position:absolute;
+  top:15px;
+  right:70px; /* next to your sidebar toggle button */
+  width:40px;
+  height:40px;
+  background:#703535;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+  z-index:30;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+}
+</style>
+
+<script>
+const openIndexBtn = document.getElementById("openIndexBtn");
+openIndexBtn.addEventListener("click", () => {
+  window.open("index.html", "_self"); // opens index.html in the same tab
+});
+</script>
+
+
+</div>
+
+<script>
+const sidebar = document.getElementById("sidebar");
+const sidebarBtn = document.getElementById("sidebarToggleBtn");
+
+sidebarBtn.addEventListener("click", () => {
+  if(sidebar.style.display === "none" || sidebar.style.display === ""){
+    sidebar.style.display = "block";
+  } else {
+    sidebar.style.display = "none";
+  }
+});
+
+// Camera and MediaPipe code
+const video=document.getElementById("video");
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+canvas.width=1024;
+canvas.height=650;
+
+let port,writer,lastSent="";
+let modelReady=false;
+let voiceEnabled=false;
+const synth = window.speechSynthesis;
+let lastSpoken="";
+
+document.getElementById("voiceBtn").onclick=()=>{
+  voiceEnabled = !voiceEnabled;
+  document.getElementById("voiceBtn").innerText = voiceEnabled ? "Disable Voice" : "Enable Voice";
+};
+
+function speak(text){
+  if(voiceEnabled && text!==lastSpoken){
+    synth.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    synth.speak(utter);
+    lastSpoken=text;
+  }
+}
+
+function v(id){return document.getElementById(id).value.trim();}
+
+async function connectArduino(){
+  port=await navigator.serial.requestPort();
+  await port.open({baudRate:9600});
+  writer=port.writable.getWriter();
+  usbStatus.innerText="Connected";
+}
+
+function send(val){
+  if(writer && val && val!==lastSent){
+    writer.write(new TextEncoder().encode(val+"\n"));
+    lastSent=val;
+  }
+}
+
+function fingerUp(lm,t,p){return lm[t].y < lm[p].y;}
+
+const holistic=new Holistic({
+  locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${f}`
+});
+
+holistic.setOptions({
+  modelComplexity:1,
+  smoothLandmarks:true,
+  minDetectionConfidence:0.6,
+  minTrackingConfidence:0.6
+});
+
+holistic.onResults(r=>{
+  if(!modelReady){loading.style.display="none";modelReady=true;}
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(r.image,0,0,canvas.width,canvas.height);
+
+  let detected=false;
+  let gestures=[];
+
+  if(r.poseLandmarks){
+    detected=true;
+    drawConnectors(ctx,r.poseLandmarks,POSE_CONNECTIONS,{color:"#ff0000"});
+
+    const head=r.poseLandmarks[0].y;
+    const lh=r.poseLandmarks[15].y;
+    const rh=r.poseLandmarks[16].y;
+
+    if(rh<head){send(v("rhUp"));gestures.push("Right hand up");}else{send(v("rhDown"));gestures.push("Right hand down");}
+    if(lh<head){send(v("lhUp"));gestures.push("Left hand up");}else{send(v("lhDown"));gestures.push("Left hand down");}
+    if(lh<head && rh<head){send(v("bothUp"));gestures.push("Both hands up");}
+    if(lh>head && rh>head){send(v("bothDown"));gestures.push("Both hands down");}
+  }
+
+  if(r.rightHandLandmarks){
+    const lm=r.rightHandLandmarks;
+    const f=[fingerUp(lm,4,3),fingerUp(lm,8,6),fingerUp(lm,12,10),fingerUp(lm,16,14),fingerUp(lm,20,18)];
+    f[0]?send(v("thumbUp")):send(v("thumbDown"));f[0]?gestures.push("Right thumb up"):gestures.push("Right thumb down");
+    f[1]?send(v("indexUp")):send(v("indexDown"));f[1]?gestures.push("Right index up"):gestures.push("Right index down");
+    f[2]?send(v("middleUp")):send(v("middleDown"));f[2]?gestures.push("Right middle up"):gestures.push("Right middle down");
+    f[3]?send(v("ringUp")):send(v("ringDown"));f[3]?gestures.push("Right ring up"):gestures.push("Right ring down");
+    f[4]?send(v("pinkyUp")):send(v("pinkyDown"));f[4]?gestures.push("Right pinky up"):gestures.push("Right pinky down");
+    drawConnectors(ctx,lm,HAND_CONNECTIONS,{color:"#00ff00"});
+  }
+
+  if(r.leftHandLandmarks){
+    const lm=r.leftHandLandmarks;
+    const f=[fingerUp(lm,4,3),fingerUp(lm,8,6),fingerUp(lm,12,10),fingerUp(lm,16,14),fingerUp(lm,20,18)];
+    f[0]?send(v("lThumbUp")):send(v("lThumbDown"));f[0]?gestures.push("Left thumb up"):gestures.push("Left thumb down");
+    f[1]?send(v("lIndexUp")):send(v("lIndexDown"));f[1]?gestures.push("Left index up"):gestures.push("Left index down");
+    f[2]?send(v("lMiddleUp")):send(v("lMiddleDown"));f[2]?gestures.push("Left middle up"):gestures.push("Left middle down");
+    f[3]?send(v("lRingUp")):send(v("lRingDown"));f[3]?gestures.push("Left ring up"):gestures.push("Left ring down");
+    f[4]?send(v("lPinkyUp")):send(v("lPinkyDown"));f[4]?gestures.push("Left pinky up"):gestures.push("Left pinky down");
+    drawConnectors(ctx,lm,HAND_CONNECTIONS,{color:"#ff00ff"});
+  }
+
+  if(r.faceLandmarks){
+    drawConnectors(ctx,r.faceLandmarks,FACEMESH_TESSELATION,{color:"#888"});
+    Math.abs(r.faceLandmarks[13].y-r.faceLandmarks[14].y)>0.03
+      ? (send(v("mouthOpen")),gestures.push("Mouth open"))
+      : (send(v("mouthClose")),gestures.push("Mouth close"));
+    Math.abs(r.faceLandmarks[159].y-r.faceLandmarks[145].y)<0.005
+      ? (send(v("eyesClose")),gestures.push("Eyes closed"))
+      : (send(v("eyesOpen")),gestures.push("Eyes open"));
+  }
+
+  noperson.style.display=detected?"none":"flex";
+
+  const gestureText = gestures.join(", ");
+  gestureLabel.innerText = gestureText || "---";
+  speak(gestureText);
+});
+
+const cam=new Camera(video,{
+  onFrame:async()=>{await holistic.send({image:video});},
+  width:1280,height:720
+});
+cam.start();
+</script>
+
+</body>
+</html>
