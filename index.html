@@ -107,18 +107,7 @@ body {
   transform: translateX(5px);
 }
 
-/* Logo + Tagline */
-.sidebar-logo {
-  margin-top: 15px;
-  display: flex;
-  justify-content: center;
-}
-
-.sidebar-logo img {
-  width: 180px;
-  border-radius: 12px;
-}
-
+/* Tagline */
 .tagline {
   margin-top: auto;
   padding-top: 20px;
@@ -139,7 +128,7 @@ body {
   justify-content: center;
 }
 
-/* Welcome PNG (center) */
+/* Welcome PNG */
 #welcome {
   position: absolute;
   display: flex;
@@ -153,7 +142,7 @@ body {
   max-width: 80%;
 }
 
-/* After selection → move right */
+/* Move after selection */
 #welcome.moved {
   right: 20px;
   bottom: 20px;
@@ -205,6 +194,11 @@ iframe {
   <div class="sidebar">
     <h1>IntelliBot</h1>
 
+    <!-- AI BUTTON -->
+    <div class="menu-group">
+      <button class="menu-btn" onclick="loadPage('ai.html')">AI</button>
+    </div>
+
     <div class="menu-group">
       <button class="menu-btn">CONTROL</button>
       <div class="sub-menu">
@@ -220,10 +214,6 @@ iframe {
         <button class="sub-btn" onclick="loadPage('tmserial.html')">Serial Port</button>
       </div>
     </div>
-
-    <!-- <div class="sidebar-logo">
-      <img src="mylogo.png" alt="EDUINO Logo">
-    </div> -->
 
     <div class="tagline">
       Think • Track • Control
@@ -252,7 +242,6 @@ function loadPage(page) {
 
   viewer.style.display = "block";
   viewer.src = page;
-
   welcome.classList.add("moved");
 }
 </script>
