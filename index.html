@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDUINO ROBOTS | Web Controller</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  height: 100vh;
+  width: 100vw;
+  background: linear-gradient(135deg, #74ebd5, #acb6e5);
+  overflow: hidden;
+}
+
+/* Layout */
+.app {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(14px);
+  box-shadow: 4px 0 25px rgba(0,0,0,0.2);
+  padding: 25px 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Title */
+.sidebar h1 {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 25px;
+}
+
+/* Menu */
+.menu-group {
+  margin-bottom: 10px;
+}
+
+.menu-btn {
+  width: 100%;
+  border: none;
+  padding: 15px;
+  border-radius: 15px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #ffffff;
+  color: #333;
+  transition: 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.menu-btn:hover {
+  background: #222;
+  color: #fff;
+}
+
+.sub-menu {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: all 0.35s ease;
+  margin-left: 10px;
+  margin-top: 5px;
+}
+
+.menu-group:hover .sub-menu {
+  max-height: 200px;
+  opacity: 1;
+}
+
+.sub-btn {
+  width: 100%;
+  border: none;
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #eaeaea;
+  color: #333;
+  transition: 0.3s ease;
+}
+
+.sub-btn:hover {
+  background: #444;
+  color: #fff;
+  transform: translateX(5px);
+}
+
+/* Logo + Tagline */
+.sidebar-logo {
+  margin-top: 15px;
+  display: flex;
+  justify-content: center;
+}
+
+.sidebar-logo img {
+  width: 180px;
+  border-radius: 12px;
+}
+
+.tagline {
+  margin-top: auto;
+  padding-top: 20px;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #222;
+  opacity: 0.8;
+}
+
+/* Content */
+.content {
+  flex: 1;
+  padding: 12px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Welcome PNG (center) */
+#welcome {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.5s ease;
+}
+
+#welcome img {
+  width: 420px;
+  max-width: 80%;
+}
+
+/* After selection → move right */
+#welcome.moved {
+  right: 20px;
+  bottom: 20px;
+  transform: scale(0.4);
+}
+
+/* Iframe */
+iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+  display: none;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 80px;
+  }
+
+  .sidebar h1 {
+    font-size: 0.8rem;
+  }
+
+  .menu-btn {
+    font-size: 0.7rem;
+    padding: 10px;
+  }
+
+  .sub-btn {
+    font-size: 0.65rem;
+  }
+
+  #welcome img {
+    width: 220px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <h1>IntelliBot</h1>
+
+    <div class="menu-group">
+      <button class="menu-btn">CONTROL</button>
+      <div class="sub-menu">
+        <button class="sub-btn" onclick="loadPage('bluetoothmanual.html')">Bluetooth</button>
+        <button class="sub-btn" onclick="loadPage('serialmanual.html')">Serial Port</button>
+      </div>
+    </div>
+
+    <div class="menu-group">
+      <button class="menu-btn">TRAIN MODEL</button>
+      <div class="sub-menu">
+        <button class="sub-btn" onclick="loadPage('tmwithtelegram.html')">Bluetooth</button>
+        <button class="sub-btn" onclick="loadPage('tmserial.html')">Serial Port</button>
+      </div>
+    </div>
+
+    <!-- <div class="sidebar-logo">
+      <img src="mylogo.png" alt="EDUINO Logo">
+    </div> -->
+
+    <div class="tagline">
+      Think • Track • Control
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- Welcome Image -->
+    <div id="welcome">
+      <img src="mylogo.png" alt="Welcome">
+    </div>
+
+    <!-- Viewer -->
+    <iframe id="viewer"></iframe>
+
+  </div>
+
+</div>
+
+<script>
+function loadPage(page) {
+  const viewer = document.getElementById("viewer");
+  const welcome = document.getElementById("welcome");
+
+  viewer.style.display = "block";
+  viewer.src = page;
+
+  welcome.classList.add("moved");
+}
+</script>
+
+</body>
+</html>
